@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-
+import { WS_URL } from './config';
 interface Message {
   id: string;
   username: string;
@@ -95,7 +95,7 @@ function App() {
   }
 
   const connectToRoom = () => {
-    const ws = new WebSocket('ws://localhost:8080')
+    const ws = new WebSocket(WS_URL);
     
     ws.onopen = () => {
       setIsConnected(true)
@@ -284,12 +284,6 @@ function App() {
         
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(156, 163, 175, 0.8);
-        }
-        
-        /* Firefox scrollbar */
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(156, 163, 175, 0.5) rgba(55, 65, 81, 0.3);
         }
       `}</style>
       
