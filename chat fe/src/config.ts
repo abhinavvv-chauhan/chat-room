@@ -1,1 +1,1 @@
-export const WS_URL = "wss://chat-be.onrender.com";
+export const WS_URL = "https://chat-room-backend-apho.onrender.com";
