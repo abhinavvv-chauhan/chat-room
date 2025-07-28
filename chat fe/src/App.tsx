@@ -29,7 +29,6 @@ function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
-  // auto-scroll
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -44,7 +43,6 @@ function App() {
       connectToRoom()
     }
     
-    // cleanup code
     return () => {
       if (wsRef.current) {
         wsRef.current.close()
@@ -100,7 +98,6 @@ function App() {
     ws.onopen = () => {
       setIsConnected(true)
       
-      // join the specified room
       ws.send(JSON.stringify({
         type: 'join',
         payload: {
@@ -189,7 +186,6 @@ function App() {
     setRoomCode('')
   }
 
-  // lobby screen
   if (currentScreen === 'lobby') {
     return (
       <div className='min-h-screen bg-black flex items-center justify-center p-4' style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
@@ -260,7 +256,6 @@ function App() {
     )
   }
 
-  // chat screen
   return (
     <div className='min-h-screen bg-black flex items-center justify-center p-4' style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
       <style>{`

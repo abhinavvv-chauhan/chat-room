@@ -1,6 +1,20 @@
+import { createServer } from "http"; 
 import { WebSocketServer, WebSocket } from "ws";
 
-const wss = new WebSocketServer({ port: 8080 });
+const server = createServer((req, res) => {
+    if (req.url === '/health' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
+        return;
+    }
+
+    res.writeHead(404);
+    res.end();
+});
+
+const wss = new WebSocketServer({ server });
+
+const PORT = 8080;
 
 interface User {
     socket: WebSocket;
@@ -156,3 +170,7 @@ function generateMessageId(): string {
 function generateUserId(): string {
     return `user_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
 }
+
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
