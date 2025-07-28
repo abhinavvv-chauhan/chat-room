@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 
-const WS_URL = "ws://localhost:8080";
+const getWsUrl = () => {
+  if (window.location.protocol === 'https:'){
+    return "wss://chat-room-backend-apho.onrender.com";
+  }
+  return "ws://localhost:8080";
+}
+
+const WS_URL = getWsUrl();
 
 interface Message {
   id: string;
