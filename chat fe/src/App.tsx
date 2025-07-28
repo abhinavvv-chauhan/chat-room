@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { WS_URL } from './config';
+
+const WS_URL = "ws://localhost:8080";
+
 interface Message {
   id: string;
   username: string;
@@ -27,7 +29,6 @@ function App() {
   const usernameInputRef = useRef<HTMLInputElement>(null)
   const roomCodeInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -36,7 +37,6 @@ function App() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
-
   
   useEffect(() => {
     if (currentScreen === 'chat' && username && roomCode) {
@@ -70,7 +70,6 @@ function App() {
     setUsername(name)
     setRoomCode(newRoomCode)
     setCurrentScreen('chat')
-    showNotification('Room created successfully!')
   }
 
   const joinExistingRoom = () => {
@@ -97,7 +96,7 @@ function App() {
     
     ws.onopen = () => {
       setIsConnected(true)
-      
+      showNotification(`Connected to room: ${roomCode}`)
       ws.send(JSON.stringify({
         type: 'join',
         payload: {
@@ -125,6 +124,7 @@ function App() {
 
     ws.onclose = () => {
       setIsConnected(false)
+      showNotification('Disconnected from server.')
     }
 
     ws.onerror = (error) => {
@@ -159,8 +159,19 @@ function App() {
   }
 
   const copyRoomCodeToClipboard = () => {
-    navigator.clipboard.writeText(roomCode)
-    showNotification('Room code copied to clipboard!')
+    const textArea = document.createElement("textarea");
+    textArea.value = roomCode;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showNotification('Room code copied to clipboard!');
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+        showNotification('Failed to copy room code.');
+    }
+    document.body.removeChild(textArea);
   }
 
   const showNotification = (message: string) => {
@@ -196,7 +207,7 @@ function App() {
         <div className='bg-gray-900 rounded-xl p-8 w-full max-w-md border border-gray-700 shadow-2xl'>
           <div className='text-center mb-8'>
             <div className='flex items-center justify-center gap-3 mb-3'>
-              <div className='w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center'>
+              <div className='w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center'>
                 <span className='text-white text-lg'>💬</span>
               </div>
               <h1 className='text-3xl font-bold text-white tracking-tight'>ChatFlow</h1>
@@ -208,13 +219,13 @@ function App() {
             ref={usernameInputRef}
             type='text'
             placeholder='Enter your display name'
-            className='w-full bg-gray-800 text-white p-4 rounded-xl mb-6 border border-gray-600 focus:border-blue-500 focus:outline-none transition-all duration-200 font-medium placeholder-gray-500'
+            className='w-full bg-gray-800 text-white p-4 rounded-xl mb-6 border border-gray-600 focus:border-gray-500 focus:outline-none transition-all duration-200 font-medium placeholder-gray-500'
             onKeyPress={(e) => handleEnterKey(e, createNewRoom)}
           />
 
           <button
             onClick={createNewRoom}
-            className='w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl cursor-pointer font-semibold mb-6 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
+            className='w-full bg-gray-700 text-white py-4 rounded-xl cursor-pointer font-semibold mb-6 hover:bg-gray-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
           >
             Create New Room
           </button>
@@ -233,13 +244,13 @@ function App() {
               ref={roomCodeInputRef}
               type='text'
               placeholder='Room Code'
-              className='flex-1 bg-gray-800 text-white p-4 rounded-xl border border-gray-600 focus:border-blue-500 focus:outline-none uppercase font-mono tracking-wider transition-all duration-200 placeholder-gray-500'
+              className='flex-1 bg-gray-800 text-white p-4 rounded-xl border border-gray-600 focus:border-gray-500 focus:outline-none uppercase font-mono tracking-wider transition-all duration-200 placeholder-gray-500'
               onKeyPress={(e) => handleEnterKey(e, joinExistingRoom)}
               onChange={(e) => e.target.value = e.target.value.toUpperCase()}
             />
             <button
               onClick={joinExistingRoom}
-              className='bg-white text-black px-6 py-4 cursor-pointer rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl'
+              className='bg-gray-700 text-white px-6 py-4 cursor-pointer rounded-xl font-semibold hover:bg-gray-600 transition-all duration-200 shadow-lg hover:shadow-xl'
             >
               Join
             </button>
@@ -247,8 +258,7 @@ function App() {
         </div>
 
         {notification && (
-          <div className='fixed bottom-6 right-6 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl flex items-center gap-3 shadow-xl animate-bounce'>
-            <span className='text-lg'>✓</span>
+          <div className='fixed top-5 left-1/2 -translate-x-1/2 bg-gray-800 border border-gray-600 text-white px-6 py-3 rounded-xl flex items-center gap-3 shadow-xl transition-all duration-300 animate-pulse'>
             <span className='font-medium'>{notification}</span>
           </div>
         )}
@@ -257,37 +267,20 @@ function App() {
   }
 
   return (
-    <div className='min-h-screen bg-black flex items-center justify-center p-4' style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+    <div className='h-screen bg-black flex flex-col' style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        /* Custom scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(55, 65, 81, 0.3);
-          border-radius: 3px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(156, 163, 175, 0.5);
-          border-radius: 3px;
-          transition: background 0.2s ease;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(156, 163, 175, 0.8);
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(31, 41, 55, 0.3); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(107, 114, 128, 0.5); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(107, 114, 128, 0.8); }
       `}</style>
       
-      <div className='bg-gray-900 rounded-xl w-full max-w-4xl h-[700px] flex flex-col border border-gray-700 shadow-2xl'>
+      <div className='bg-gray-900 w-full h-full flex flex-col'>
         
-        
-        <div className='bg-gradient-to-r from-gray-800 to-gray-700 p-5 rounded-t-xl flex justify-between items-center border-b border-gray-600'>
+        <div className='bg-gray-800 p-5 flex justify-between items-center border-b border-gray-700'>
           <div className='flex items-center gap-3'>
-            <div className='w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center'>
+            <div className='w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center'>
               <span className='text-white text-lg'>💬</span>
             </div>
             <h1 className='text-xl font-bold text-white tracking-tight'>ChatFlow</h1>
@@ -303,11 +296,10 @@ function App() {
           </button>
         </div>
 
-        
         <div className='bg-gray-800 px-5 py-3 flex justify-between items-center border-b border-gray-700'>
           <div className='flex items-center gap-3'>
             <div className='flex items-center gap-2'>
-              <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+              <div className={`w-2 h-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'} rounded-full animate-pulse`}></div>
               <span className='text-gray-400 text-sm font-medium'>Room:</span>
             </div>
             <span className='text-white font-mono font-semibold tracking-wider text-lg'>{roomCode}</span>
@@ -322,23 +314,21 @@ function App() {
             </button>
           </div>
           <div className='flex items-center gap-2'>
-            <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
+            <div className='w-2 h-2 bg-gray-500 rounded-full'></div>
             <span className='text-gray-400 text-sm font-medium'>
               {roomInfo?.userCount || 1} user{(roomInfo?.userCount || 1) !== 1 ? 's' : ''} online
             </span>
           </div>
         </div>
 
-        
         <div 
-          ref={messagesContainerRef}
           className='flex-1 p-5 overflow-y-auto bg-gray-900 custom-scrollbar'
         >
           {messages.length === 0 ? (
-            <div className='text-center text-gray-500 mt-32'>
+            <div className='text-center text-gray-500 flex flex-col justify-center items-center h-full'>
               <div className='text-6xl mb-4'>👋</div>
               <p className='text-lg font-medium mb-2'>Welcome to your chat room!</p>
-              <p className='text-sm'>Share the room code with others to start chatting</p>
+              <p className='text-sm'>Share the room code with others to start chatting.</p>
             </div>
           ) : (
             <div className='space-y-4'>
@@ -353,10 +343,10 @@ function App() {
                   ) : (
                     <div className='flex flex-col'>
                       <div className='flex items-center gap-3 mb-2'>
-                        <div className='w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                        <div className='w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center text-white text-xs font-bold'>
                           {msg.username.charAt(0).toUpperCase()}
                         </div>
-                        <span className='text-blue-400 font-semibold text-sm'>
+                        <span className='text-gray-400 font-semibold text-sm'>
                           {msg.username}
                         </span>
                         <span className='text-gray-500 text-xs font-medium'>
@@ -364,7 +354,7 @@ function App() {
                         </span>
                       </div>
                       <div className='ml-9'>
-                        <div className='bg-gradient-to-r from-gray-700 to-gray-600 text-white rounded-2xl px-4 py-3 max-w-md break-words shadow-lg'>
+                        <div className='bg-gray-700 text-white rounded-2xl px-4 py-3 inline-block max-w-[75%] break-words shadow-lg'>
                           <p className='leading-relaxed'>{msg.message}</p>
                         </div>
                       </div>
@@ -377,14 +367,13 @@ function App() {
           )}
         </div>
 
-        
-        <div className='p-5 bg-gray-800 rounded-b-xl border-t border-gray-700'>
+        <div className='p-5 bg-gray-800 border-t border-gray-700'>
           <div className='flex gap-3'>
             <input
               ref={messageInputRef}
               type='text'
-              placeholder='Type your message...'
-              className='flex-1 bg-gray-700 text-white p-4 rounded-xl border border-gray-600 focus:border-blue-500 focus:outline-none transition-all duration-200 font-medium placeholder-gray-500'
+              placeholder={isConnected ? 'Type your message...' : 'Connecting...'}
+              className='flex-1 bg-gray-700 text-white p-4 rounded-xl border border-gray-600 focus:border-gray-500 focus:outline-none transition-all duration-200 font-medium placeholder-gray-500'
               onKeyPress={(e) => handleEnterKey(e, sendMessage)}
               disabled={!isConnected}
             />
@@ -393,8 +382,8 @@ function App() {
               disabled={!isConnected}
               className={`px-8 py-4 rounded-xl font-semibold transition-all duration-200 ${
                 isConnected 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-[1.02]' 
-                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gray-600 text-white hover:bg-gray-500 shadow-lg hover:shadow-xl transform hover:scale-[1.02]' 
+                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
               }`}
             >
               Send
@@ -403,16 +392,14 @@ function App() {
           
           {!isConnected && (
             <div className='flex items-center justify-center gap-2 mt-3'>
-              <div className='w-2 h-2 bg-red-500 rounded-full animate-pulse'></div>
+              <div className='w-2 h-2 bg-red-500 rounded-full animate-ping'></div>
               <p className='text-red-400 text-sm font-medium'>
-                Disconnected from server
+                Disconnected. Attempting to reconnect...
               </p>
             </div>
           )}
         </div>
       </div>
-
-      
     </div>
   )
 }

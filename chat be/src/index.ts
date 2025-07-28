@@ -1,4 +1,4 @@
-import { createServer } from "http"; 
+import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 
 const server = createServer((req, res) => {
@@ -14,7 +14,7 @@ const server = createServer((req, res) => {
 
 const wss = new WebSocketServer({ server });
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 interface User {
     socket: WebSocket;
@@ -50,14 +50,18 @@ wss.on("connection", (socket) => {
                     handleChatMessage(socket, data.payload);
                     break;
             }
-        } catch {}
+        } catch (error) {
+            console.error("Failed to parse message or handle event:", error);
+        }
     });
 
     socket.on("close", () => {
         handleUserDisconnect(socket);
     });
 
-    socket.on("error", () => {});
+    socket.on("error", (error) => {
+        console.error("WebSocket error:", error);
+    });
 });
 
 function handleJoinRoom(socket: WebSocket, payload: { username: string, roomCode: string }) {
@@ -87,11 +91,6 @@ function handleJoinRoom(socket: WebSocket, payload: { username: string, roomCode
         type: 'message',
         payload: welcomeMsg
     });
-
-    socket.send(JSON.stringify({
-        type: 'notification',
-        payload: { message: 'A user has joined the room' }
-    }));
 }
 
 function handleChatMessage(socket: WebSocket, payload: { message: string }) {
@@ -164,11 +163,11 @@ function broadcastRoomInfo(roomCode: string) {
 }
 
 function generateMessageId(): string {
-    return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 }
 
 function generateUserId(): string {
-    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    return `user_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 }
 
 server.listen(PORT, () => {
