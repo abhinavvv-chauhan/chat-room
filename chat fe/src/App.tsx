@@ -294,7 +294,7 @@ function App() {
           </div>
           <button
             onClick={leaveCurrentRoom}
-            className='text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-600 rounded-lg'
+            className='text-gray-400 cursor-pointer hover:text-white transition-colors p-2 hover:bg-gray-600 rounded-lg'
             title='Leave room'
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -387,7 +387,7 @@ function App() {
             <button
               onClick={sendMessage}
               disabled={!isConnected}
-              className={`px-8 py-4 rounded-xl font-semibold transition-all duration-200 ${
+              className={`px-8 py-4 rounded-xl  cursor-pointer font-semibold transition-all duration-200 ${
                 isConnected 
                   ? 'bg-gray-600 text-white hover:bg-gray-500 shadow-lg hover:shadow-xl transform hover:scale-[1.02]' 
                   : 'bg-gray-700 text-gray-400 cursor-not-allowed'
